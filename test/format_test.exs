@@ -7,10 +7,10 @@ defmodule Raygun.FormatTest do
 
   test "stacktrace_payload" do
     stacktrace = [
-      {RaygunTest, :"test report_stacktrace", 1, [file: 'test/raygun_test.exs', line: 30]},
-      {ExUnit.Runner, :exec_test, 2, [file: 'lib/ex_unit/runner.ex', line: 253]},
-      {:timer, :tc, 1, [file: 'timer.erl', line: 166]},
-      {ExUnit.Runner, :"-spawn_test/3-fun-1-", 3, [file: 'lib/ex_unit/runner.ex', line: 201]}
+      {RaygunTest, :"test report_stacktrace", 1, [file: ~c"test/raygun_test.exs", line: 30]},
+      {ExUnit.Runner, :exec_test, 2, [file: ~c"lib/ex_unit/runner.ex", line: 253]},
+      {:timer, :tc, 1, [file: ~c"timer.erl", line: 166]},
+      {ExUnit.Runner, :"-spawn_test/3-fun-1-", 3, [file: ~c"lib/ex_unit/runner.ex", line: 201]}
     ]
 
     error = %{

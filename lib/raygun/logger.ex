@@ -21,8 +21,10 @@ defmodule Raygun.Logger do
   Match any errors that are logged. Send them on to Raygun.
   """
   def handle_event({:error, gl, {Logger, msg, _ts, _md}}, state) when node(gl) == node() do
-    if Exception.exception?(msg) do
-      Raygun.report_stacktrace(msg, apply(:erlang, :get_stacktrace, []))
+    if is_exception(msg) do
+      # Note: Logger events don't have access to stacktraces
+      # We pass an empty stacktrace since :erlang.get_stacktrace/0 was removed
+      Raygun.report_stacktrace([], msg)
     else
       Raygun.report_message(msg)
     end

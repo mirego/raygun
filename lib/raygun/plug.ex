@@ -52,7 +52,7 @@ defmodule Raygun.Plug do
           super(conn, opts)
         rescue
           exception ->
-            stacktrace = System.stacktrace()
+            stacktrace = __STACKTRACE__
 
             Raygun.report_plug(conn, stacktrace, exception,
               vsn: Raygun.Util.get_key(:raygun, :vsn) |> List.to_string(),

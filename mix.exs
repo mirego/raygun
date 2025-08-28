@@ -5,10 +5,8 @@ defmodule Raygun.Mixfile do
     [
       app: :raygun,
       version: "0.4.0",
-      elixir: "~> 1.3",
+      elixir: "~> 1.18",
       source_url: "https://github.com/cobenian/raygun",
-      build_embedded: Mix.env() == :prod,
-      start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
       test_coverage: [tool: ExCoveralls],
@@ -21,7 +19,9 @@ defmodule Raygun.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :httpoison, :plug, :poison]]
+    [
+      extra_applications: [:logger, :httpoison, :plug]
+    ]
   end
 
   defp description do
@@ -53,13 +53,13 @@ defmodule Raygun.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:jason, "~> 1.2"},
-      {:httpoison, "~> 0.8 or ~> 1.0"},
-      {:plug, "~> 1.1"},
-      {:earmark, "~> 1.0", only: :dev},
-      {:ex_doc, "~> 0.11", only: :dev},
-      {:meck, "~> 0.8", only: :test},
-      {:excoveralls, "~> 0.10", only: :test}
+      {:jason, "~> 1.4"},
+      {:httpoison, "~> 1.5"},
+      {:plug, "~> 1.14"},
+      {:earmark, "~> 1.4", only: :dev},
+      {:ex_doc, "~> 0.30", only: :dev},
+      {:meck, "~> 1.0", only: :test},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 

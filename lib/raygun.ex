@@ -21,8 +21,10 @@ defmodule Raygun do
 
   @deprecated "Use report_stacktrace/2 instead"
   def report_exception(exception, opts \\ []) do
-    apply(:erlang, :get_stacktrace, [])
-    |> report_stacktrace(exception, opts)
+    # Note: :erlang.get_stacktrace/0 was removed in OTP 24
+    # This function is deprecated and should not be used
+    # Use report_stacktrace/2 with __STACKTRACE__ from within a rescue clause instead
+    report_stacktrace([], exception, opts)
   end
 
   @doc """

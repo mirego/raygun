@@ -39,23 +39,21 @@ defmodule Raygun.Util do
   @doc """
   Given stacktrace information, get the line number.
   """
-  def line_from([]) do
-    "unknown"
-  end
-
-  def line_from(file: _file, line: line) do
-    line
+  def line_from(stacktrace) when is_list(stacktrace) do
+    Keyword.get(stacktrace, :line, "unknown")
   end
 
   @doc """
   Given stacktrace information, get the file name.
   """
-  def file_from([]) do
-    "unknown"
-  end
+  def file_from(stacktrace) when is_list(stacktrace) do
+    file = Keyword.get(stacktrace, :file)
 
-  def file_from(file: file, line: _line) do
-    file |> List.to_string()
+    if is_list(file) do
+      List.to_string(file)
+    else
+      file
+    end
   end
 
   @doc """
