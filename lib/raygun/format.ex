@@ -154,12 +154,20 @@ defmodule Raygun.Format do
         httpMethod: conn.method,
         iPAddress: conn.remote_ip |> :inet.ntoa() |> List.to_string(),
         queryString: Plug.Conn.fetch_query_params(conn).query_params,
-        form: Plug.Parsers.call(conn, []).params,
+        form: safe_form_params(conn),
         headers: Raygun.Util.format_headers(conn.req_headers),
         rawData: %{}
       }
     }
   end
+
+  def safe_form_params(%{method: method, body_params: %Plug.Conn.Unfetched{}} = conn)
+      when method in ["POST", "PUT", "PATCH", "DELETE"] do
+    Plug.Parsers.call(conn, []).params
+  end
+
+  def safe_form_params(%{body_params: %Plug.Conn.Unfetched{}}), do: %{}
+  def safe_form_params(%{body_params: body_params}), do: body_params
 
   @doc """
   Given a Plug Conn return a map containing information about the response.
