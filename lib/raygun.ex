@@ -31,7 +31,11 @@ defmodule Raygun do
   Reports an exception and its corresponding stacktrace to Raygun.
   """
   def report_stacktrace(stacktrace, exception, opts \\ []) do
-    Raygun.Format.stacktrace_payload(stacktrace, exception, opts) |> send_report
+    before_send = Application.get_env(:raygun, :before_send, nil)
+
+    with {:ok, exception} <- maybe_call_before_send(exception, before_send) do
+      Raygun.Format.stacktrace_payload(stacktrace, exception, opts) |> send_report
+    end
   end
 
   @doc """
@@ -40,7 +44,11 @@ defmodule Raygun do
   the exception occurred by retrieving some state from the Plug Conn.
   """
   def report_plug(conn, stacktrace, exception, opts \\ []) do
-    Raygun.Format.conn_payload(conn, stacktrace, exception, opts) |> send_report
+    before_send = Application.get_env(:raygun, :before_send, nil)
+
+    with {:ok, exception} <- maybe_call_before_send(exception, before_send) do
+      Raygun.Format.conn_payload(conn, stacktrace, exception, opts) |> send_report
+    end
   end
 
   defp send_report(error) do
@@ -59,5 +67,18 @@ defmodule Raygun do
       {:ok, %HTTPoison.Response{status_code: 403}} -> {:error, :invalid_api_key}
       {:error, _} -> {:error, :unexpected}
     end
+  end
+
+  defp maybe_call_before_send(exception, nil), do: {:ok, exception}
+
+  defp maybe_call_before_send(exception, {module, function}) do
+    apply(module, function, [exception])
+  end
+
+  defp maybe_call_before_send(_exception, callback) do
+    raise ArgumentError, """
+    :before_send must be a {module, function} tuple, got: \
+    #{inspect(callback)}\
+    """
   end
 end
