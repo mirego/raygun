@@ -37,6 +37,7 @@ with every error.
 * url: a reference URL
 * client_name: the name of the application as you want it to appear in Raygun
 * client_version: the version of the application as you want it to appear in Raygun
+* before_send: a {module, function} tuple that allows you to modify or filter exceptions before they're sent to Raygun
 
 ```elixir
 config :raygun,
@@ -44,7 +45,28 @@ config :raygun,
     tags: ["tag1", "tag2"],
     url: "http://docs.myapp.example.com",
     client_name: "MyApp",
-    client_version: "2.3.4"
+    client_version: "2.3.4",
+    before_send: {MyApp.RaygunFilter, :filter_exception}
+```
+
+### before_send Configuration
+
+The `before_send` callback allows you to modify exceptions before they are sent to Raygun, or prevent them from being sent entirely. This is useful for:
+
+- Filtering out sensitive information
+- Adding additional context
+- Preventing certain types of exceptions from being reported
+
+The callback function should accept an exception and return either:
+- `{:ok, exception}` - to send the (potentially modified) exception
+- `{:error, reason}` - to prevent the exception from being sent
+
+```elixir
+defmodule MyApp.RaygunFilter do
+  def filter_exception(%ArgumentError{} = exception) do
+    {:error, :filtered}
+  end
+end
 ```
 
 If you use a Plug, the version (client_version above) should be auto detected for you.
