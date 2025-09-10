@@ -47,7 +47,13 @@ defmodule Raygun do
   this captures some additional information about the environment in which
   the exception occurred by retrieving some state from the Plug Conn.
   """
-  def report_plug(conn, stacktrace, exception, opts \\ []) do
+  def report_plug(conn, stacktrace, exception, opts \\ [])
+
+  def report_plug(conn, stacktrace, %Plug.Conn.WrapperError{} = error, opts) do
+    report_plug(conn, stacktrace, Exception.normalize(:error, error.reason, error.stack), opts)
+  end
+
+  def report_plug(conn, stacktrace, exception, opts) do
     before_send = Application.get_env(:raygun, :before_send, nil)
 
     with {:ok, exception} <- maybe_call_before_send(exception, before_send) do

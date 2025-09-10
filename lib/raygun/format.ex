@@ -154,20 +154,57 @@ defmodule Raygun.Format do
         httpMethod: conn.method,
         iPAddress: conn.remote_ip |> :inet.ntoa() |> List.to_string(),
         queryString: Plug.Conn.fetch_query_params(conn).query_params,
-        form: safe_form_params(conn),
+        form: parse_form_params(conn),
         headers: Raygun.Util.format_headers(conn.req_headers),
         rawData: %{}
       }
     }
   end
 
-  def safe_form_params(%{method: method, body_params: %Plug.Conn.Unfetched{}} = conn)
+  def parse_form_params(%{method: method, body_params: %Plug.Conn.Unfetched{}} = conn)
       when method in ["POST", "PUT", "PATCH", "DELETE"] do
-    Plug.Parsers.call(conn, []).params
+    case Plug.Conn.read_body(conn) do
+      {:ok, body, _conn} ->
+        parse_body(body, get_content_type(conn))
+
+      {:error, _reason} ->
+        %{}
+    end
   end
 
-  def safe_form_params(%{body_params: %Plug.Conn.Unfetched{}}), do: %{}
-  def safe_form_params(%{body_params: body_params}), do: body_params
+  def parse_form_params(%{body_params: %Plug.Conn.Unfetched{}}), do: %{}
+  def parse_form_params(%{body_params: body_params}), do: body_params
+
+  defp parse_body("", _content_type), do: %{}
+
+  defp parse_body(body, content_type) do
+    cond do
+      String.contains?(content_type, "application/json") ->
+        case Jason.decode(body) do
+          {:ok, decoded} when is_map(decoded) -> decoded
+          _ -> %{"raw_json_body" => body}
+        end
+
+      String.contains?(content_type, "application/x-www-form-urlencoded") ->
+        case Plug.Conn.Query.decode(body) do
+          params when is_map(params) -> params
+          _ -> %{"raw_form_body" => body}
+        end
+
+      String.contains?(content_type, "multipart/form-data") ->
+        %{"multipart_data" => "present"}
+
+      true ->
+        %{"raw_body" => body}
+    end
+  end
+
+  defp get_content_type(conn) do
+    case Plug.Conn.get_req_header(conn, "content-type") do
+      [content_type | _] -> String.downcase(content_type)
+      [] -> ""
+    end
+  end
 
   @doc """
   Given a Plug Conn return a map containing information about the response.
