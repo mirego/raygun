@@ -1,5 +1,4 @@
-# Raygun [![Build Status](https://travis-ci.org/Cobenian/raygun.svg?branch=master)](https://travis-ci.org/Cobenian/raygun) [![Hex.pm](https://img.shields.io/hexpm/v/raygun.svg?maxAge=2592000)](https://hex.pm/packages/raygun) [![Hex.pm](https://img.shields.io/hexpm/dt/raygun.svg?maxAge=2592000)](https://hex.pm/packages/raygun) [![Coverage Status](https://coveralls.io/repos/github/Cobenian/raygun/badge.svg?branch=master)](https://coveralls.io/github/Cobenian/raygun?branch=master)
-
+# Raygun
 
 Capture and send errors in your Elixir applications to Raygun for centralized
 bug reporting.
@@ -9,16 +8,8 @@ bug reporting.
 Add the dependency to your mix.exs file.
 
 ```elixir
-def deps do  
-  [{:raygun, "~> 0.3.1"}]
-end
-```
-
-Add Raygun, httpoison and tzdata to the list of applications.
-
-```elixir
-def application do
-  [applications: [:logger, :raygun, :httpoison, :tzdata]
+def deps do
+  [{:raygun, github: "mirego/raygun"}]
 end
 ```
 
@@ -146,52 +137,32 @@ following configuration to config/config.exs:
 
 ### Any Elixir code
 
-Start our Raygun application (if you did not configure it as an application
-in mix.exs)
-
-```elixir
-Raygun.start
-```
-
 Send a string message to Raygun:
 
 ```elixir
 Raygun.report_message "Oh noes."
 ```
 
-Report an exception programmatically. Be sure that System.stacktrace will be
-the correct stack trace!
+Report an exception programmatically with its stacktrace. Use `__STACKTRACE__`
+inside the `rescue` clause.
 
 ```elixir
 try do
   :foo = :bar
 rescue
-  exception -> Raygun.report_exception(exception)
+  exception -> Raygun.report_stacktrace(__STACKTRACE__, exception)
 end
 ```
 
-Or capture the stacktrace explicitly yourself and pass it to Raygun.
+You can pass custom context as an optional final keyword list. It will appear
+as 'userCustomData' under the custom tab in Raygun's web interface.
 
 ```elixir
 try do
   :foo = :bar
 rescue
   exception ->
-    stacktrace = System.stacktrace
-    Raygun.report_stacktrace(stacktrace, exception)
-end
-```  
-
-Both forms allow some custom context to be passed as an optional final
-parameters as a Map. This will appear as 'userCustomData' under the custom
-tab in Raygun's web interface.
-
-```elixir
-try do
-  :foo = :bar
-rescue
-  exception ->
-    Raygun.report_stacktrace(System.stacktrace, exception, %{env: Mix.env})
+    Raygun.report_stacktrace(__STACKTRACE__, exception, env: Mix.env())
 end
 ```
 
