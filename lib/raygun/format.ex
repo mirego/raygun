@@ -245,6 +245,10 @@ defmodule Raygun.Format do
   Given a stacktrace frame, return a map with the information in a structure
   that Raygun will understand.
   """
+  def stacktrace_entry(nil) do
+    %{lineNumber: "unknown", className: "unknown", fileName: nil, methodName: "unknown"}
+  end
+
   def stacktrace_entry({function, arity_or_args, location}) do
     stacktrace_entry({__MODULE__, function, arity_or_args, location})
   end

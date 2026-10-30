@@ -69,14 +69,30 @@ defmodule Raygun do
       "X-ApiKey": Raygun.Util.get_env(:raygun, :api_key)
     }
 
-    opts = Application.get_env(:raygun, :httpoison_opts, [])
+    opts =
+      Keyword.merge(
+        [timeout: 2_000, recv_timeout: 5_000],
+        Application.get_env(:raygun, :httpoison_opts, [])
+      )
 
-    case HTTPoison.post(@api_endpoint, Jason.encode!(error), headers, opts) do
-      {:ok, %HTTPoison.Response{status_code: 202}} -> :ok
-      {:ok, %HTTPoison.Response{status_code: 400}} -> {:error, :bad_message}
-      {:ok, %HTTPoison.Response{status_code: 403}} -> {:error, :invalid_api_key}
-      {:error, _} -> {:error, :unexpected}
+    transport = Application.get_env(:raygun, :transport, Raygun.Transport.HTTPoison)
+    body = Jason.encode!(error)
+    max_bytes = Process.get(:raygun_max_bytes)
+
+    if max_bytes && byte_size(body) > max_bytes do
+      {:error, :report_too_large}
+    else
+      case transport.post(@api_endpoint, body, headers, opts) do
+        {:ok, %HTTPoison.Response{status_code: 202}} -> :ok
+        {:ok, %HTTPoison.Response{status_code: 400}} -> {:error, :bad_message}
+        {:ok, %HTTPoison.Response{status_code: 403}} -> {:error, :invalid_api_key}
+        _ -> {:error, :unexpected}
+      end
     end
+  rescue
+    _ -> {:error, :unexpected}
+  catch
+    :exit, _ -> {:error, :unexpected}
   end
 
   defp maybe_call_before_send(exception, nil), do: {:ok, exception}
