@@ -20,6 +20,7 @@ defmodule Raygun.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [
+      mod: {Raygun.Application, []},
       extra_applications: [:logger, :httpoison, :plug]
     ]
   end
